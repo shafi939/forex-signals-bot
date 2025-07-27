@@ -1,37 +1,57 @@
 import logging
-from aiogram import Bot, Dispatcher, types
-from aiogram.utils import executor
+import asyncio
+import aiohttp
+from aiogram import Bot, Dispatcher, types, executor
 
-# ====== التوكن مباشر (غيّره بتوكنك الحقيقي) ======
+# 🔑 توكن البوت الخاص بك
 API_TOKEN = '7550278246:AAH6UUiBxRRomE1QTKiC7xgmCVjPceQOMns'
 
-# ====== إعدادات اللوق ======
 logging.basicConfig(level=logging.INFO)
-
-# ====== تعريف البوت والديسباتشر ======
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
-# ====== رسالة ترحيب ======
+# العملات المطلوبة مع رموز التوحّد
+symbols = {
+    "ذهب": "XAU",
+    "بيتكوين": "BTC",
+    "يورو": "EUR",
+    "باوند": "GBP"
+}
+
+# دالة سؤال أسعار لايف من exchangerate.host
+async def get_live_price(symbol: str) -> float | None:
+    url = f"https://api.exchangerate.host/latest?base={symbol}&symbols=USD"
+    try:
+        async with aiohttp.ClientSession() as session:
+            r = await session.get(url)
+            data = await r.json()
+            return data['rates']['USD']
+    except:
+        return None
+
+# توليد توصية بسيطة
+def generate_signal(price: float) -> str:
+    tp = round(price * 1.01, 4)
+    sl = round(price * 0.995, 4)
+    action = "شراء" if price < tp else "بيع"
+    return f"السعر: {price}\nنوع الصفقة: {action}\nالهدف: {tp}\nالستوب: {sl}"
+
 @dp.message_handler(commands=['start'])
-async def send_welcome(message: types.Message):
-    await message.reply("أهلًا في بوت التوصيات 🔥\nاكتب اسم العملة (ذهب، بيتكوين، يورو، باوند) لتحصل على التوصية.")
+async def cmd_start(message: types.Message):
+    await message.reply("أهلاً بك! أرسل اسم عملة (ذهب، بيتكوين، يورو، باوند) لتحصل على توصية لايف.")
 
-# ====== التوصيات للعملات ======
-@dp.message_handler()
-async def handle_currency(message: types.Message):
-    text = message.text.lower()
-    if "ذهب" in text or "gold" in text:
-        await message.reply("📈 توصية الذهب:\nشراء من 2320\nالهدف: 2340\nالستوب: 2300")
-    elif "بيتكوين" in text or "bitcoin" in text:
-        await message.reply("📈 توصية البيتكوين:\nشراء من 58200\nالهدف: 59500\nالستوب: 57000")
-    elif "يورو" in text or "eur" in text:
-        await message.reply("📈 توصية اليورو:\nشراء من 1.0850\nالهدف: 1.0900\nالستوب: 1.0800")
-    elif "باوند" in text or "gbp" in text:
-        await message.reply("📈 توصية الباوند:\nشراء من 1.2900\nالهدف: 1.2970\nالستوب: 1.2840")
-    else:
-        await message.reply("❌ العملة غير معروفة. اكتب: ذهب، بيتكوين، يورو، أو باوند")
+@dp.message_handler(lambda m: m.text in symbols)
+async def cmd_signal(message: types.Message):
+    sym = message.text
+    code = symbols[sym]
+    price = await get_live_price(code)
+    if price is None:
+        return await message.reply("❌ تعذر جلب السعر.")
+    signal = generate_signal(price)
+    await message.reply(f"📊 توصية {sym}:\n{signal}")
 
-# ====== تشغيل البوت ======
+async def on_startup(_):
+    pass
+
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
