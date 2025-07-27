@@ -1,28 +1,21 @@
-import logging
 import asyncio
 from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
 
-# توكن بوت تيليجرام
-TOKEN = "7550278246:AAH6UUiBxRRomE1QTKiC7xgmCVjPceQOMns"
+# ✅ هذا هو التوكن الخاص بك
+API_TOKEN = '7550278246:AAH6UUiBxRRomE1QTKiC7xgmCVjPceQOMns'
 
-# إنشاء البوت والموزع
-bot = Bot(token=TOKEN)
+bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
-# أمر /start و /help
-@dp.message_handler(commands=["start", "help"])
+@dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
-    await message.reply("مرحباً بك في بوت توصيات الفوركس والذهب 💰\nتابعنا يوميًا لأقوى التحليلات!")
+    await message.reply("أهلاً بك في بوت توصيات العملات 🔥\nاكتب /توصية للحصول على أقوى صفقة الآن.")
 
-# أي رسالة عادية
-@dp.message_handler()
-async def handle_message(message: types.Message):
-    await message.reply("🔔 قريبًا سيتم إرسال التوصيات بشكل تلقائي هنا!")
+@dp.message_handler(commands=['توصية'])
+async def send_signal(message: types.Message):
+    توصية = "📊 صفقة اليوم:\n\nالعملة: الذهب\nالدخول: 2320\nالهدف: 2332\nالستوب: 2312"
+    await message.reply(توصية)
 
-# تشغيل البوت
-async def main():
-    logging.basicConfig(level=logging.INFO)
-    await dp.start_polling()
-
-if __name__ == "__main__":
-    asyncio.run(main())
+if __name__ == '__main__':
+    asyncio.run(dp.start_polling())
