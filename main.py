@@ -1,34 +1,28 @@
 import logging
+import asyncio
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import ParseMode
-from aiogram.utils import executor
 
-API_TOKEN = '7550278246:AAH6UUiBxRRomE1QTKiC7xgmCVjPceQOMns'
+# توكن بوت تيليجرام
+TOKEN = "7550278246:AAH6UUiBxRRomE1QTKiC7xgmCVjPceQOMns"
 
-logging.basicConfig(level=logging.INFO)
-bot = Bot(token=API_TOKEN)
+# إنشاء البوت والموزع
+bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-@dp.message_handler(commands=['start'])
+# أمر /start و /help
+@dp.message_handler(commands=["start", "help"])
 async def send_welcome(message: types.Message):
-    await message.reply("مرحبًا! اكتب 'صفقة' للحصول على توصية قوية.")
+    await message.reply("مرحباً بك في بوت توصيات الفوركس والذهب 💰\nتابعنا يوميًا لأقوى التحليلات!")
 
-@dp.message_handler(lambda message: message.text.lower() == 'صفقة')
-async def send_signal(message: types.Message):
-    recommendation = """
-📊 توصية اليوم:
+# أي رسالة عادية
+@dp.message_handler()
+async def handle_message(message: types.Message):
+    await message.reply("🔔 قريبًا سيتم إرسال التوصيات بشكل تلقائي هنا!")
 
-✅ العملة: بيتكوين
-🔼 صفقة: شراء
-🎯 الهدف: 61200
-🛑 وقف الخسارة: 58900
+# تشغيل البوت
+async def main():
+    logging.basicConfig(level=logging.INFO)
+    await dp.start_polling()
 
-⚠️ الفريم: 15 دقيقة
-📉 التحليل: كسر كاذب + سيولة + شمعة ابتلاع صاعدة
-
-بالتوفيق 🌟
-"""
-    await message.reply(recommendation, parse_mode=ParseMode.MARKDOWN)
-
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+if __name__ == "__main__":
+    asyncio.run(main())
